@@ -13,23 +13,24 @@ mt_all = [];
 [trackPer,lost_tp,firstAppear,allAppear] = Track_Accur(history_all,tp,ns); %how many times each spines are tracked among given number (tp) of time series(trackPer) and for how many time points a spine is lost (lost_tp).
 trackPerBefore = trackPer;
 %plotting tracking accuracy for each spine on a single image
-% figure,imagesc(slices_all(tp).h),colormap(gray),hold on, axis off;
-% for ss = 1:ns
-%     format bank;
-%     text(revised_centroids(tp).h(ss,1),revised_centroids(tp).h(ss,2),num2str(trackPerBefore(ss)),'FontSize',8, 'Color','r');
-% end
-% s=sprintf('print -depsc %s/trackAccuracy,print -djpeg %s/trackAccuracy;',foldername,foldername); eval(s);
-% figure,imagesc(slices_all(tp).h),colormap(gray),hold on, axis off;
-% for ss = 1:ns
-%     format bank;
-%     if trackPerBefore(ss)>=Missing_spine_prob_Thre
-%        text(revised_centroids(tp).h(ss,1),revised_centroids(tp).h(ss,2),num2str(trackPerBefore(ss)),'FontSize',8, 'Color','r');
-%     end
-% end
-% s=sprintf('print -depsc %s/trackAccuracy_2,print -djpeg %s/trackAccuracy_2;',foldername,foldername); eval(s);
+figure,imagesc(slices_all(tp).h),colormap(gray),hold on, axis off;
+for ss = 1:ns
+    format bank;
+    text(revised_centroids(tp).h(ss,1),revised_centroids(tp).h(ss,2),num2str(trackPerBefore(ss)),'FontSize',8, 'Color','r');
+end
+
+s=sprintf('print -depsc %s/trackAccuracy,print -djpeg %s/trackAccuracy;',foldername,foldername); eval(s);
+figure,imagesc(slices_all(tp).h),colormap(gray),hold on, axis off;
+for ss = 1:ns
+    format bank;
+    if trackPerBefore(ss)>=Missing_spine_prob_Thre
+       text(revised_centroids(tp).h(ss,1),revised_centroids(tp).h(ss,2),num2str(trackPerBefore(ss)),'FontSize',8, 'Color','r');
+    end
+end
+s=sprintf('print -depsc %s/trackAccuracy_2,print -djpeg %s/trackAccuracy_2;',foldername,foldername); eval(s);
 
 %spine no vs time plot which shows spine apperance path.
-x = 1:ns;
+%x = 1:ns;
 % figure
 % for tt = 1:ns
 %     plot(allAppear(tt,:),x(tt),'*','Color',rand(1,3),'LineWidth',3);
@@ -52,7 +53,6 @@ for kk = 1:size(trackPer,1)
     missed_spines = [missed_spines,kk]; %which one we missed to detect
     end
 end
-
 
 for mm = 1:size(missed_spines,2)
 
@@ -92,8 +92,7 @@ for nn =1:size(missed_spines,2)
        ft = found_tps(nn).h(tt); %time point where we could detect that spine.
         Tfound = sprintf('T%d.mat',ft); %to get information from time points where that spine was found
         load(Tfound)
-        im1 = Img;
-       %%ph0 = ph; %getting contour information from time point where we found spine - as an initial point for time point where we couldnt find that spine
+        %im1 = Img;
         if ft == 1
             cutcenter = revised_centroids(ft+1).h(missed_spines(nn),:);
             centroids = revised_centroids(ft+1).h;
@@ -101,9 +100,23 @@ for nn =1:size(missed_spines,2)
             cutcenter = revised_centroids(ft).h(missed_spines(nn),:);
             centroids = revised_centroids(ft).h;
         end
+        
+      %we constract a small rectangle 1 by 1 to check the meanintensity of
+      %the keypoint
+      cut11=round(cutcenter);
+       rectkeypoint = [cut11(1)-1,cut11(2)-1,2,2];
+        keypoint_ROI = imcrop(Img,rectkeypoint); 
+                keypoint_mean=sum(sum(keypoint_ROI)); 
+        kps= keypoint_mean/((2*1+1)^2);
+  if kps<(c1+c2)/2
+     % keyboard
+         continue 
+  end
     
-        [ph_n,phbw,ph1]=DrawNewROI_circle(N,N,centroids, rad);%ph_n is the last level set given centroids
-        ph0=ph1; 
+      [ph_n,phbw,ph1]=DrawNewROI_circle(N,N,centroids, rad);%ph_n is the last level set given centroids
+        %ph0=ph_n;
+        %ph0=ph1; 
+       ph0 = ph; %getting contour information from time point where we found spine - as an initial point for time point where we couldnt find that spine
         cutcenter = round(cutcenter);
         %%in case the spine center is close to the image border
         if size(Img,1) - cutcenter(1) < rad_rect 
@@ -124,18 +137,15 @@ for nn =1:size(missed_spines,2)
          end      
 
         rect = [cutcenter(1)-rad_rect1,cutcenter(2)-rad_rect2,rad_rect1*2,rad_rect2*2];
-      %New we constract a small rectangle 2 by 2 to check if we do have a
-      %spine in the 20 by 20 ROI
-     % keyboard
+   
         ph0_ROI = imcrop(ph0,rect); %selecting ROI
-       % figure,imagesc(ph0_ROI),colormap(gray), axis off
-
+        %figure,imagesc(ph0_ROI),colormap(gray), axis off
         Tmissed = sprintf('T%d.mat',mt); %to work on time point where we couldnt find that spine
         load(Tmissed)
-        phBefore = ph;
+        phBefore = ph;%is the cercle already with the given centroid
     
         backgroundInt = c2;
-        beta=1.0e-6;h1=1;h2=1;maxit=50;epsilon=1;dt=0.001;alpha=0.01;
+        beta=1.0e-6;h1=1;h2=1;maxit=50;epsilon=1;dt=0.1;alpha=0.01;
         mu=100^2;lambda1=1;lambda2=lambda1;Hind=2;
         maxNumberOfPixels = 6000;
        
@@ -166,6 +176,7 @@ for nn =1:size(missed_spines,2)
             cutcenterOld = cutcenter;
         end
         cutcenter = round(cutcenter);
+        cutcenterOld = round(cutcenterOld);%%New
         %%in case the spine center is close to the image border
         if size(Img,1) - cutcenter(1) < rad_rect 
              rad_rect1 = size(Img,1) - cutcenter(1);
@@ -193,7 +204,6 @@ for nn =1:size(missed_spines,2)
             component_no = L(cutcenter(2),cutcenter(1));
            
             if component_no == 0
-               % keyboard
                 continue;
             end
           
@@ -210,7 +220,7 @@ for nn =1:size(missed_spines,2)
                 %%%%%show the watershade image and the missing spine centroid
 %                 figure,imagesc(Img0),colormap(gray), axis off,hold on,plot(cutcenter(1),cutcenter(2),'rx');
 %                 s=sprintf('print -depsc %s/watershed_W_%d_%d,print -djpeg %s/watershed_W-%d_%d;',foldername,missed_spines(nn),mt,foldername,missed_spines(nn),mt); eval(s);
-            %%%new Ladi: Trying to enlarge the watershed region by threshold changes
+            %%%Trying to enlarge the watershed region by threshold changes
                if isempty(waterShedRegion)
                 maxNumberOfPixels = 80000;%%%more enhancmant to get a new watershed region 
                 [Img0,L,waterShedLevels]=watershed_seg1(Img,maxNumberOfPixels);
@@ -225,14 +235,13 @@ for nn =1:size(missed_spines,2)
                 end
             end
             if isempty(waterShedRegion)
-               % keyboard
-                continue;
+                continue
             end
         end
        
         Img0 = waterShedRegion; 
-        Img0_ROI = imcrop(Img0,rect2);
-        % % %         %%%%%old Bike%%%%%%%%%%%%%%%%
+        a_ROI = imcrop(Img0,rect2);
+        % % %         %%%%%old %%%%%%%%%%%%%%%%
 % %          Img0_ROI((Img0_ROI == 0)) = backgroundInt;
 % %         roiImg = double(imcrop(Img,rect2));
 % %         a_ROI=Img0_ROI.* double(roiImg);
@@ -240,82 +249,75 @@ for nn =1:size(missed_spines,2)
 
 %         % New%%%%%%%%%%%%%
          ph_crop=imcrop(ph,rect2);
-         [m1,n1]=size(ph_crop);ph_crop_pozitive=zeros(m1,n1);
-           for ph_in1=1:m1
-            for ph_in2=1:n1
-                if ph_crop(ph_in1,ph_in2)<=0;
-                    ph_crop_pozitive(ph_in1,ph_in2)=1;
-                end
-            end
-           end
-
-        Img0_ROI((Img0_ROI == 0)) = backgroundInt;
-        Img0_ROI((ph_crop_pozitive == 0)) = backgroundInt;
-        roiImg = double(imcrop(Img,rect2));
-        a_ROI=Img0_ROI.* double(roiImg);
-        Img0_ROI=double(a_ROI);
+         [ ph_crop_pozitive]=ph_crop_p(ph_crop);
+          a_ROI((a_ROI == 255)) = 1;
+                roiImg = double(imcrop(Img,rect2));
+                Img0_ROI=a_ROI.* double(roiImg);
+                 test_mean=sum(sum(Img0_ROI)); ts= test_mean/(nnz(Img0_ROI));
+         %a_ROI((a_ROI == 0)) =backgroundInt;      
+      %ph0_ROI=ph0_ROI.*ph_crop_pozitive;
+        %ph0_ROI((ph_crop_pozitive == 0)) =0;%backgroundInt;
+         Img0_ROI((ph_crop_pozitive == 0)) =0;%backgroundInt;
   
-        test_mean=sum(sum(roiImg)); 
-        ts= test_mean/((rad_rect+1)^2);
-        if ts<(c1+c2)/4;
-         continue;
-        end
+%         ts= test_mean/((2*rad_rect+1)^2)
+          if ts<(c1+c2)/2
+              %keyboard
+         continue 
+          end
 
         %check size of ph0_ROI and Img0_ROI cause they might be different
         %due to their center locations
-        if size(Img0_ROI,1) ~= size(ph0_ROI,1) || size(Img0_ROI,2) ~= size(ph0_ROI,2)
-            [n1,m1] = size(Img0_ROI);
-            [n2,m2] = size(ph0_ROI);
-            if n1 < n2
-                rev_n = n1;
-                ph0_ROI = imresize(ph0_ROI,[rev_n,m2]);
-            elseif n2 <n1
-                rev_n = n2;
-                Img0_ROI = imresize(Img0_ROI,[rev_n,m1]);
-            end
-            if m1<m2
-                rev_m = m1;
-                ph0_ROI = imresize(ph0_ROI,[size(ph0_ROI,1),rev_m]);
-            elseif m2<m1
-                rev_m = m2;
-                Img0_ROI = imresize(Img0_ROI,[size(Img0_ROI,1),rev_m]);
-            end
-        end
+ [Img0_ROI,ph0_ROI,ph_crop_pozitive]=resize_depending_on_center(Img0_ROI,ph0_ROI,ph_crop_pozitive);
    %dbstop if error
-   % keyboard
+% if  (mt==1 && missed_spines(nn)==7)||(mt==2 && missed_spines(nn)==7)
+%     keyboard;%mt=2 missed_spines=7 11 12
+% end%
+% mt2  missed_sp= 7, 11, 12, 13, 18, 19,  29, 44, 45, 46, 47, 48,  49,  50, 51, 52,  53, 54 55,56 57
+
+             
  [m1,n1]=size(Img0_ROI);
  if m1>3 && n1>3
-    % if  mt==19 && missed_spines(nn)==9;keyboard;end%%
-        [ph_new,u_new]=relax_coarsest2(Img0_ROI,ph0_ROI,beta,mu,maxit,epsilon,dt,lambda1,lambda2,1,1000);
+   
+        [ph_new,u_new,c1new,c2new]=relax_coarsest2(Img0_ROI,ph0_ROI,beta,mu,maxit,epsilon,dt,lambda1,lambda2,2,1000);
+
  end
-        ch = ismember(find(ph_new>0),find(Img0_ROI == 0));
+  ph_new((ph_crop_pozitive == 0)) =-20;%backgroundInt;
+  
+              %Img0_ROI((Img0_ROI == backgroundInt)) = 0;
+%            if    ph_new(Img0_ROI == 0)>=0
+%                continue
+%            end
+         
+    
+          %ch = ismember(find(ph_new>0),find(Img0_ROI == 0));
+        ch = ismember(find(ph_new~=0),find(Img0_ROI ~= 0));
         [ind,var]= find(ch);
+        
         formatSpec = 'The %dth spine which missed at time point %d';
         str = sprintf(formatSpec,missed_spines(nn),mt);
         %%%%spine missing in a roi
         %figure;imagesc(roiImg);axis off;hold on;contour(ph_new,[0,0],'yo');colormap(gray);title(str);
         empMtx = zeros(size(Img));
         empMtx(:,:) = -1;
-        if nn==2
-     % keyboard
-        end
+    
         if cutcenterOld(1) <rad_rect && cutcenterOld(2) <rad_rect
            print('both...')
         elseif cutcenterOld(1) <rad_rect%%%%needsto be fixed
-    %empMtx(cutcenterOld(2)-(cutcenterOld(1)-1):cutcenterOld(2)+(cutcenterOld(1)-1),1:cutcenterOld(1)+(cutcenterOld(1)-1)) = ph_new(1:(2*cutcenterOld(1)-1),1:(2*cutcenterOld(1)-1));
+    empMtx(cutcenterOld(2)-(cutcenterOld(1)-1):cutcenterOld(2)+(cutcenterOld(1)-1),1:cutcenterOld(1)+(cutcenterOld(1)-1)) = ph_new(1:(2*cutcenterOld(1)-1),1:(2*cutcenterOld(1)-1));
         elseif cutcenterOld(2) <rad_rect    
 % % %     dbstop if error
 % % %      diff_rad= rad_rect-cutcenterOld(2); 
 % % %      empMtx(1:(2*(cutcenterOld(2)-2*diff_rad)-1),cutcenterOld(1)-(cutcenterOld(2)-1):cutcenterOld(1)+(cutcenterOld(2)+1)) = ph_new(1:(2*(cutcenterOld(2)-2*diff_rad)-1),1:(2*cutcenterOld(2)+2*diff_rad-1));
-   % empMtx(1:cutcenterOld(2)+(cutcenterOld(2)-1),cutcenterOld(1)-(cutcenterOld(2)-1):cutcenterOld(1)+(cutcenterOld(2)-1)) = ph_new(1:(2*cutcenterOld(2)-1),1:(2*cutcenterOld(2)-1));
+%          empMtx(1:cutcenterOld(2)+(cutcenterOld(2)-1),cutcenterOld(1)-(cutcenterOld(2)-1):cutcenterOld(1)+(cutcenterOld(2)-1)) = ph_new(1:(2*cutcenterOld(2)-1),1:(2*cutcenterOld(2)-1));
            
         else
-            empMtx(cutcenterOld(2)-(size(ph_new,1)-((size(ph_new,1)+1)/2)):cutcenterOld(2)+(size(ph_new,1)-((size(ph_new,1)+1)/2)),cutcenterOld(1)-(size(ph_new,2)-((size(ph_new,2)+1)/2)):cutcenterOld(1)+(size(ph_new,2)-((size(ph_new,2)+1)/2))) = ph_new;
+  %          empMtx(cutcenterOld(2)-(size(ph_new,1)-((size(ph_new,1)+1)/2)):cutcenterOld(2)+(size(ph_new,1)-((size(ph_new,1)+1)/2)),cutcenterOld(1)-(size(ph_new,2)-((size(ph_new,2)+1)/2)):cutcenterOld(1)+(size(ph_new,2)-((size(ph_new,2)+1)/2))) = ph_new;
         end
-            dbstop if error
+            %dbstop if error
         reseg_spine(nn).time(mt).h = empMtx;
         formatSpec = 'Spine(s) missed at time point %d';
-       
+         %if  mt==1 && missed_spines(nn)==47;keyboard;end%% 12 13   18  19  29 44   45 46   47  48
+
         str = sprintf(formatSpec,mt);
         if nn == 1
             figure,imagesc(Img),axis off,hold on,contour(phBefore,[0,0],'yo'),colormap(gray);title(str);
@@ -350,9 +352,9 @@ for nn =1:size(missed_spines,2)
         end
 
          mt_all = [mt_all,vertcat(mt,nn)];
-         if size(ind,1) ~= size(find(ph_new>0),1) %which means we could segment the spine now.
+         if size(ind,1) ~= size(find(ph_new ~=0),1) %which means we could segment the spine now.
             t_improve_score = t_improve_score+1;
-        elseif size(find(empMtx>0),1) == size(find(ph_new>0),1) %which means we could segment the spine now.
+        elseif size(find(empMtx>0),1) == size(find(ph_new ~=0),1) %which means we could segment the spine now.
             t_improve_score = t_improve_score+1;
         else
             %we need shape prior information to improve segmentation
@@ -362,12 +364,12 @@ for nn =1:size(missed_spines,2)
     close all
 end
 
-% figure;imagesc(slices_all(tp).h);colormap(gray);hold on; title('Tracking accuracy after re-segmentation');axis off;
-% for ss = 1:ns
-%     format bank;
-%     text(revised_centroids(tp).h(ss,1),revised_centroids(tp).h(ss,2),num2str(trackPer(ss)),'FontSize',8, 'Color','r');
-% end
-% s=sprintf('print -depsc %s/trackAccuracyImproved,print -djpeg %s/trackAccuracyImproved;',foldername,foldername); eval(s);
+figure;imagesc(slices_all(tp).h);colormap(gray);hold on; title('Tracking accuracy after re-segmentation');axis off;
+for ss = 1:ns
+    format bank;
+    text(revised_centroids(tp).h(ss,1),revised_centroids(tp).h(ss,2),num2str(trackPer(ss)),'FontSize',8, 'Color','r');
+end
+s=sprintf('print -depsc %s/trackAccuracyImproved,print -djpeg %s/trackAccuracyImproved;',foldername,foldername); eval(s);
 
 figure;imagesc(slices_all(tp).h);colormap(gray);hold on; title('Tracking accuracy after re-segmentation');axis off;
 for ss = 1:ns

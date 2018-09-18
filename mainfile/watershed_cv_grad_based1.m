@@ -22,13 +22,21 @@ for i = 1:numberOfComponents % i=0 is the watershed, ignore
             end
     end
 end
+% beta=1.0e-6;h1=1;h2=1;maxit=100;epsilon=1;dt=0.001;alpha=0.01;
+% mu=500;lambda1=1;lambda2=lambda1;Hind=2;
 beta=1.0e-6;h1=1;h2=1;maxit=100;epsilon=1;dt=0.01;alpha=0.01;
 mu=800;lambda1=1;lambda2=lambda1;Hind=2;
   a=waterShedSegmentation_all.* double(imMedian);
      I0= filterBinary1.* double(I); 
-      Img0=double(a); 
-       Img0= sqrt(Img0.*I0);
-       ph0=bwdist(filteredBinaryImage); ph0=-double(ph0); % the centers of binary image blobs are so bright
+%        m1=mean(mean(a(find(a>0))));Img0=a;
+%       Img0(find(a==0))=m1;Img0=double(Img0(:,:,1));
+      Img0=double(a);
+       ph0=bwdist(filteredBinaryImage); ph0=-double(ph0); %so the centers of binary image blobs are so bright
+     % ph0=bwdist(waterShedSegmentation_all); ph0=-double(ph0);
+   
+     %[ph]=cv_grad(ph0,Img0,I0,Hind,dt,mu,alpha,lambda1,lambda2,maxit,epsilon,beta,iprob,h1,h2);
+
+    % [ph]=cv_grad_tm(Img0,I0,ph0,beta,mu,h1,h2,maxit,epsilon,dt,lambda1,lambda2);
     
     [ph,u,c1,c2]=relax_coarsest2(Img0,ph0,beta,mu,maxit,epsilon,dt,lambda1,lambda2,2,100);
  

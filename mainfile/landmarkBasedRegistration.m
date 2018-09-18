@@ -1,14 +1,11 @@
-
 function [bestTransformation,imreg] = landmarkBasedRegistration(im1, im2,desc1,locs1,desc2,locs2,foldernameout,step,iprob)
-global registration_plot 
-
+%  
 % [~, desc1, locs1] = sift(im1);
 % [~, desc2, locs2] = sift(im2);
 %%%registration visualization
-if registration_plot==1
- figure; visualizer(uint8(im2), im2bw(im1, graythresh(im1)), 0.4, '');title('Before Registration')
-s=sprintf('print -depsc %s/Before_reg%d_im_no%d,print -djpeg %s/Before_reg%d_im_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
-end
+%  figure; visualizer(uint8(im2), im2bw(im1, graythresh(im1)), 0.4, '');
+% s=sprintf('print -depsc %s/Before_reg%d_im_no%d,print -djpeg %s/Before_reg%d_im_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
+
 [match1, angles, locations] = match(im1, im2, desc1, desc2, locs1, locs2, 0.8,foldernameout,iprob,step);
 indices = find(match1 ~= 0); %number of common key locs (like common spines but not nesesary)
 match1 = match1(indices);%takes only matched points
@@ -28,6 +25,10 @@ end
 x = sort(translations(:, 1));
 y = sort(translations(:, 2));
 len = round(length(x) * 0.10);
+%%%%????we have to get rid of the max translation not min!!!Bike version from len
+%mine from 1 to (end - len)
+%x = x(1:(end - len));
+%y = y(1:(end - len));%%% we get as x and y ony 60 % of the elements
 
 x = x(len:(end - len)); 
 y = y(len:(end - len));%%% we get as x and y ony 80 % of the elements
@@ -47,14 +48,15 @@ im1 = imdilate(im1, se);
 imreg = im1;
 bestTransformation = [0 y x];
 %%%after regiatration visualisation
-if registration_plot==1
-figure; visualizer(uint8(im2), im2bw(im1, graythresh(im1)), 0.4, '');title('After Registration')
-s=sprintf('print -depsc %s/reg%d_im_no%d,print -djpeg %s/reg%d_im_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
+% h = figure; visualizer(uint8(im2), im2bw(im1, graythresh(im1)), 0.4, '');
+% s=sprintf('print -depsc %s/reg%d_im_no%d,print -djpeg %s/reg%d_im_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
 
-figure;imagesc(im1);colormap(gray);axis off
-s=sprintf('print -depsc %s/reg%d_im1_no%d,print -djpeg %s/reg%d_im1_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
-figure;imagesc(im2);colormap(gray);axis off
-s=sprintf('print -depsc %s/reg%d_im2_no%d,print -djpeg %s/reg%d_im2_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
-end
+% figure;imagesc(im1);colormap(gray);axis off
+% s=sprintf('print -depsc %s/reg%d_im1_no%d,print -djpeg %s/reg%d_im1_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
+% figure;imagesc(im2);colormap(gray);axis off
+% s=sprintf('print -depsc %s/reg%d_im2_no%d,print -djpeg %s/reg%d_im2_no%d;',foldernameout,iprob,step,foldernameout,iprob,step); eval(s)
 
+%%% DETECTION
+% saveas(h, sprintf('registered_%d', id), 'png');
+% plot(1:length(find(angles > 0)), angles(find(angles > 0)), 'x');
 

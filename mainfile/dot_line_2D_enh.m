@@ -112,14 +112,13 @@ for i=1:N_m
     zdot = zdot*sigma*sigma;
     zline = zline*sigma*sigma;
    
- %if ( i==N_m)
+ if ( i==N_m)
  
-       %figure,% imshow(mat2gray(zdot))
+       figure,% imshow(mat2gray(zdot))
    %imagesc(mat2gray(zdot));colormap(gray)
-%  imagesc(zdot+zline);colormap(gray);axis off,title('Enhanced DOT Image');
-%   s=sprintf('print -depsc %s/zdot_%d_Nm%d,print -djpeg %s/zdot_%d_Nm%d;',subfoldername,iprob,i,subfoldername,iprob,i); eval(s)
-% keyboard
- %end
+ imagesc(zdot+zline);colormap(gray);axis off%title('Enhanced DOT Image');
+  s=sprintf('print -depsc %s/zdot_%d_Nm%d,print -djpeg %s/zdot_%d_Nm%d;',subfoldername,iprob,i,subfoldername,iprob,i); eval(s)
+end
     zDotEach(i, :, :) =zdot;
     zLineEach(i, :, :) = zline;
  

@@ -6,7 +6,7 @@ time_point = size(revised_centroids,2);
 %this is for 8th dataset which was manually segmented and labeled by Ozgur
 % actual_spines = [1,2,3,5,7,8,9,10,11,12,13,16,17,18,20]; 
 im = slices_all(time_point).h;
-figure,imagesc(im),colormap(gray),axis off,hold on; title('All detected spines'),
+figure,imagesc(im),colormap(gray),axis off,hold on;
 for k = 1:size(revised_centroids(time_point).h,1)
     x_i = revised_centroids(time_point).h(k, 2);
     y_i = revised_centroids(time_point).h(k, 1);

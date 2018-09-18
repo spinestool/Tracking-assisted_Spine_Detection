@@ -1,8 +1,9 @@
 %% Detection and segmentation ended. In below, tracking and association start.
 function [history_all,slices_all,revised_centroids,change_history] = Tracking_Func_Dist(foldername,iprob)
-%global Dist_Thresh  %not used
-global Loc_Registration_swich_on  plot_matchedSp
-
+global Dist_Thresh  %not used
+global Loc_Registration_swich_on
+global plot_matchedSp
+ 
 
 s = sprintf('addpath .\\%s',foldername);eval(s);
 sliceno = iprob;
@@ -21,8 +22,32 @@ end
 current_centroid=blobcentroid_all(1).h;
 new_centroid=blobcentroid_all(2).h;
 history_all = [];
-
-
+%%%%%%%%
+% for step = 2:(sliceno)
+%     
+% im1 = slices_all(step-1).h;
+% im2 = slices_all(step).h;
+% desc1 = descriptors(step-1).h;
+% locs1 = locations(step-1).h;
+% desc2 = descriptors(step).h;
+% locs2 = locations(step).h; 
+%  
+% [change,im_reg] = landmarkBasedRegistration(im1,im2,desc1,locs1,desc2,locs2,foldername,step,iprob);
+% 
+% addpath(genpath('C:\Users\lavdie.rada\Desktop\work\Detection_Bike_ladi\work aa\NN_reg\N_reg'));
+% %  subplot(2,2,1), imshow(im_reg); title('moving image');
+% % subplot(2,2,2), imshow(im1); title('static image');
+% im_reg1=im_reg;
+% if Loc_Registration_swich_on==1
+%     [im_reg,O_trans,Spacing,M,B,F]=image_registration(im2,im_reg1);
+%     [XM YM]=ndgrid(0:size(im1,1)-1,0:size(im1,1)-1);
+%       U_1=B(:,:,1)-XM; U_2=B(:,:,2)-YM;
+% end
+% h = figure; visualizer(uint8(im_reg), im2bw(im_reg1, graythresh(im_reg1)), 0.4, '');
+% s=sprintf('print -depsc %s/nonrig%d_im_no%d,print -djpeg %s/nonrig%d_im_no%d;',foldername,iprob,step,foldername,iprob,step); eval(s)
+% 
+% end
+% keyboard
 for step = 2:(sliceno)
     
 im1 = slices_all(step-1).h;
@@ -34,21 +59,27 @@ locs2 = locations(step).h;
  
 [change,im_reg] = landmarkBasedRegistration(im1,im2,desc1,locs1,desc2,locs2,foldername,step,iprob);
 
-addpath(genpath('C:\Users\lavdie.rada\Desktop\work\Detection_Bike_ladi\work(paper)\NN_reg\N_reg'));
+%addpath(genpath('C:\Users\lavdie.rada\Desktop\work\Detection_Bike_ladi\work aa\NN_reg\N_reg'));
+addpath(genpath('C:\desctop_NEW\work+new\Segmentation+new\Filters+SIFT+Det_Track_Seg_Bike_work(paper)'));
+
 %  subplot(2,2,1), imshow(im_reg); title('moving image');
 % subplot(2,2,2), imshow(im1); title('static image');
 im_reg1=im_reg;
-if Loc_Registration_swich_on==1 %still working on it
+if Loc_Registration_swich_on==1
     [im_reg,O_trans,Spacing,M,B,F]=image_registration(im2,im_reg1);
     [XM YM]=ndgrid(0:size(im1,1)-1,0:size(im1,1)-1);
       U_1=B(:,:,1)-XM; U_2=B(:,:,2)-YM;
 end
-
+% subplot(2,2,3), imshow(im_reg); title('registerd moving image');
+% Ireg2=movepixels(im_reg,F);
+% subplot(2,2,4), imshow(Ireg2); title('registerd static image');
+% keyboard
+%%change is the bestTransformation
 x_shift = change(:,size(change,2));
 y_shift = change(:,(size(change,2)-1));
 change_history(step).h = [x_shift y_shift];
 d_shift=sqrt(x_shift^2+y_shift^2);
-
+%keyboard
 for i = 1:size(current_centroid,1)
     if Loc_Registration_swich_on==1
         %current_centroid_new(i,:) = current_centroid(i,:)+[x_shift y_shift]+[U_1(round(current_centroid(i,1))) U_2(round(current_centroid(i,:)))];
@@ -321,7 +352,6 @@ revised_centroids(step).h = current_centroid;
 clear all_points_vect dist_vect 
 
 end
-
 if plot_matchedSp==1
 plot_matchedSpines(sliceno,slices_all,blobcentroid_all,revised_centroids,appeared_spines,lost_spines,gain_spines,foldername) %this function displays results on time series
 plot_allDetSpines(slices_all,revised_centroids,foldername);  %this function displays all detected spines on one final image

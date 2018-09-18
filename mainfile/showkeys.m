@@ -14,7 +14,7 @@ disp('Drawing SIFT keypoints ...');
 figure,%('Position', [0 0 size(image,2) size(image,1)]);
 colormap('gray');axis off
 imagesc(image);
-title(['SIFT keypoints for time series data' num2str(iprob)' ]);hold on;locs_spine=[];
+hold on;locs_spine=[];
 % imsize = size(image);
 for i = 1: size(locs,1)
     % Draw an arrow, each line transformed according to keypoint parameters.

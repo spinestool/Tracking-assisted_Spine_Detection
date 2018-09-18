@@ -4,7 +4,7 @@ clc;
   
 % addpath   ..\1data1/2014-01-31-s1 ;  dataset=1; %slice_no=29
 addpath  ..\1data1/9sept2011;       dataset=2;%PixelType=3;slice_no=53
-addpath  ..\1data1/13April2012;     dataset=3;%PixelType=3;slice_no=41
+%addpath  ..\1data1/13April2012;     dataset=3;%PixelType=3;slice_no=41
 %addpath  ..\1data1/Data4;          dataset=4;%slice_no=52
 %addpath  ..\1data1/Data5;           dataset=5;%slice_no=10
 %addpath  ..\1data1/26Feb2011;       dataset=6;%PixelType=3;,slice_no=41
@@ -16,8 +16,13 @@ addpath  ..\1data1/13April2012;     dataset=3;%PixelType=3;slice_no=41
 %addpath  ..\New-data-set-9TrackingDataManyTimes/MIP_FOR_ALL;      dataset=12;%slice_no=4 wich corespond to time 1 10 20 and 30
 %addpath ..\1data1/14April2012;     dataset=13;%slice_no=41
 %addpath ..\1data1/Ali_new;     dataset=14;%PixelType=1;slice_no=6
-%addpath ..\1data1/June302012;     dataset=15; 
-
+% addpath ..\1data1/June302012;     dataset=15; 
+%addpath ..\1data1/Jul162011;     dataset=16; 
+%addpath ..\1data1/Jul162011_each3times;     dataset=17; 
+%addpath ..\1data1/June302012_eah3times;     dataset=18; 
+%addpath ..\1data1/June29th2012_each3times;     dataset=19; 
+%addpath ..\1data1/Oct8th2011_each3times;     dataset=20; 
+  
 %%%% Important Note for maxNumberOfPixels = 6000 or 3000
 %%%%for 9sept2011;   medfilt_size=9;Dist_Thresh=30; rad=5;rad2=60;medfilt_size=9; maxNumberOfPixels = 3000; minNumberOfPixels = 20;
 %%%13April2012; medfilt_size=9;Dist_Thresh=30; rad=5;rad2=60;medfilt_size=9; maxNumberOfPixels = 3000; minNumberOfPixels = 20;
@@ -38,16 +43,16 @@ load labelsAll.mat;
  
 
  %%%%%filter multilevep parameters
- registration_plot=1; %to check the registration proces swich registration_plot to 1
+ registration_plot=0; %to check the registration proces swich registration_plot to 1
  plot_matchedSp=1; %to check the tracking process swich registration_plot to 1
  
 dmin=4;dmax=32;N_m=8;  %much proper for iprob 17, 26 and 27
- rad=10;rad2=60;%from iprob 12 smaller rad=25, for iprob12 epsilon=0.01  
+ rad=10;rad2=40;%from iprob 12 smaller rad=25, for iprob12 epsilon=0.01  
 %  dn = dateasstring(1);
 det_postdet = 'If only detection is performed press 1 else if redetection will be applied press 2:';
 decD = input(det_postdet); 
 prompt = 'Please enter number of time points:';
-slice_no = input(prompt);  
+slice_no = input(prompt);    
 %%%%%%%%%%%%%%%%%%
 Missing_spine_prob_Thre=0.2; 
 Loc_Registration_swich_on=0;%if 1 we have some b-spline registration       
@@ -55,7 +60,7 @@ Loc_Registration_swich_on=0;%if 1 we have some b-spline registration
 dn = dateasstring(1);
 prompt = 'Please write output foldername:';
 TestID = input(prompt,'s');
-dotEnh=1;%alpha=3; %  If  dotEnh=0 or alpha=0 we do not include dot enhancment 
+dotEnh=1; %  If  dotEnh=0 or alpha=0 we do not include dot enhancment 
 alp = 'Please enter $\alpha$ the enhancement parameter ( 3<0 \alpha <=5 recommended ):';
 alpha = input(alp);
  
@@ -64,23 +69,23 @@ if isempty(TestID)
 end
 foldername = sprintf('%s_%s',TestID,dn);
 mkdir(foldername) 
-type_px = 'Choose the Pixel Size of the taken images: \n Type= 1 -> Pixel Size: 31.38x31.38 micrometer (8 bit) \n  Type=2 -> Pixel Size: 67.58x67.58 micrometer (16 bit)\n Type=3 -> Pixel Size: 19.30x19.30 micrometer (12 bit in 16 bit format): ';
+type_px = 'Choose the Pixel Size of the taken images: \n Type= 1 ->  Pixel Size: 67.58x67.58 micrometer (16 bit)\n  Type=2 -> Pixel Size: 31.38x31.38 micrometer (8 bit) \n Type=3 -> Pixel Size: 19.30x19.30 micrometer (12 bit in 16 bit format): ';
 PixelType = input(type_px);
 if PixelType==3
     medfilt_size=9;
     Dist_Thresh=30;%distance threshold if dist<35 %distance threshold = 23 for first dataset. 35 is for 7th dataset
-    rad=5;rad2=60;
-    rad_rect = 20;%%%%%rectangle radius
+    rad=7;rad2=55;
+    rad_rect = 22;%%%%%crop rectangle radius
 elseif PixelType==2
     medfilt_size=7;
     Dist_Thresh=15;
-    rad=5;rad2=20;
+    rad=5;rad2=40;
     rad_rect = 15;%%%%%rectangle radius
 else PixelType==1
     medfilt_size=5;
     Dist_Thresh=10;
     rad=2;rad2=10;
-    rad_rect = 5;%%%%%rectangle radius
+    rad_rect = 10;%%%%%rectangle radius
 end
 
 
@@ -93,10 +98,9 @@ minNumberOfPixels = 20;
 % svmStruct = svmtrain(descAll, labelsAll);
 options.MaxIter = 100000;
 svmStruct = svmtrain(descAll,labelsAll, 'Options', options); 
-
-for iprob =1:slice_no  
+sumAreaVec=[];sumArea2Vec=[];
+for iprob =1:slice_no
     
-
 if dataset==2;imname = sprintf('image_%d.png',iprob+1) ;
 elseif dataset==3; imname = sprintf('image_%d.png',iprob) ;
 elseif dataset==4; if iprob<6;imname = sprintf('ZSeries-neuron1dhpg%d-0%d.png',iprob,iprob+41);
@@ -110,6 +114,11 @@ elseif dataset==6; imname = sprintf('im_%d.tif',iprob) ;
   elseif dataset==11; imname = sprintf('im_%d.tif',iprob) ;
 elseif dataset==14;imname = sprintf('img%d.jpg',iprob-1) ;
     elseif dataset==15; imname = sprintf('im_%d.tif',iprob+107) ;
+         elseif dataset==16; imname = sprintf('im_%d.tif',iprob) ;
+              elseif dataset==17; imname = sprintf('im_%d.tif',iprob) ;
+                  elseif dataset==18; imname = sprintf('im_%d.tif',iprob+107) ;
+                  elseif dataset==19; imname = sprintf('MIP_%d.png',iprob) ;
+                     elseif dataset==20; imname = sprintf('MIP_%d.png',iprob) ;
       elseif dataset==13; imname = sprintf('image_%d.png',iprob+11) ;
    elseif dataset==12;if iprob<10;imname = sprintf('d1-00%d.jpg',iprob);else imname = sprintf('d1-0%d.jpg',iprob);end
 elseif dataset==1;if iprob<10;imname = sprintf('d1-00%d.jpg',iprob);else imname = sprintf('d1-0%d.jpg',iprob);end
@@ -209,9 +218,15 @@ for k = 1 : numberOfBlobs % Loop through all blobs.
 end
 
 s=sprintf('print -depsc %s/imMedianLab_%d_Ny%d,print -djpeg %s/imMedianLab_%d_Ny%d;',foldername,iprob,N,foldername,iprob,N); eval(s)
-        
+      
+s  = regionprops(labeledImage, 'centroid');
+centroids = cat(1, s.Centroid);
+[sumArea2,sumArea]=labeledImageArea(imMedian,labeledImage,centroids,foldername,iprob,N);
+sumArea2Vec=[sumArea2Vec;sumArea2];
+sumAreaVec=[sumAreaVec;sumArea];
 save(sprintf('%s/T%d.mat',foldername,iprob))
-clear Img  t
+
+clear Img  t features blobRect
 close all
 
 end
@@ -219,18 +234,15 @@ end
 %Tracking starts - distance metric matching which compares spine centroids
 %  foldername ='out_20180808'; iprob=2; %iprob is the no of slices you used
 %  for the experiment 
-
+        
 [history_all,slices_all,revised_centroids,change_history] = Tracking_Func_Dist(foldername,iprob);
-  
-s=sprintf('save %s/Trac.mat history_all slices_all revised_centroids change_history foldername', foldername);eval(s) 
-
-         
+s=sprintf('save %s/Trac.mat history_all slices_all revised_centroids change_history foldername', foldername);eval(s)      
 %Tracking starts - distance metric matching which compares spine centroids,
 %area,perimeter and roundness (4*pi*area/perimeter)
 % [history_all,slices_all,revised_centroids,blobrect_all,change_history] = Tracking_Func_Feature(foldername,iprob);
 if decD==1
-    break
+    break   
 else
 %Dynamic segmentation starts
-Dynamic_Seg_Func(history_all,slices_all,revised_centroids,change_history,foldername);
-end
+Dynamic_Seg_Func1(history_all,slices_all,revised_centroids,change_history,foldername);
+end 

@@ -2,11 +2,11 @@ function [ph,u,c1,c2]=relax_coarsest2(z,ph,beta_h,mu_h,tmarchit,epsilon,dt,lambd
 
 G=fspecial('gaussian',5,2); % Gaussian kernel
 Img_smooth=conv2(z,G,'same');  % smooth image by Gaussian convolution
-% Img_smooth = z;
+%ph=bwdist(ph); %ph=-double(ph);
+ %Img_smooth = z;
 [Ix,Iy]=gradient(Img_smooth);
 f=Ix.^2+Iy.^2; %nu=100;
 g=1./(1+nu*f);  % edge indicator function.
-
 
 [vx, vy]=gradient(g);
 for I=1:tmarchit, 
@@ -27,16 +27,18 @@ delta=epsilon./(pi*(epsilon^2+ph.^2));
     Ny=phi_y./(dom+beta_h);
     divK=div(Nx,Ny);
 
-
 if meth==1
 ph=ph + dt*delta.*(mu_h.*divK -f);
 else
 edgeTerm=(vx.*Nx+vy.*Ny) + g.*divK;
 %edgeTerm=delta.*(vx.*Nx+vy.*Ny) + delta.*g.*divK;
 ph=ph + dt*delta.*(mu_h.*edgeTerm -f);
+% ph=bwdist(ph); ph=double(ph);
 end
 
 end 
+
+%if c1<c2;ph=-ph;end
 u=c1.*H+c2.*(1-H);
 
 function f = div(nx,ny)

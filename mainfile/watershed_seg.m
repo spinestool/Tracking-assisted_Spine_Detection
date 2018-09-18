@@ -23,7 +23,7 @@ L = watershed(imEqCompModified); %figure,imagesc(L)
 % graph-based (segmentation phase 2)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 numberOfComponents = max(max(L));
-% maxNumberOfPixels = 6000;%%%800 better then 8000 on some cases ex 26. 
+% maxNumberOfPixels = 6000;
 minNumberOfPixels = 20;  
 nonzeroL = [];
 waterShedSegmentation_all=zeros(size(Img));

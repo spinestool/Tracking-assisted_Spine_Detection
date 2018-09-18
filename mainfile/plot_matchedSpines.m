@@ -2,7 +2,7 @@ function plot_matchedSpines(slice_no,slices_all,blobcentroid_all,revised_centroi
 
 %plotting new labels on images
 % figure,subplot(2,3,1),imagesc(slices_all(1).h),colormap(gray),title(num2str(1)),hold on; axis off
-figure,imagesc(slices_all(1).h),colormap(gray),title(num2str(1)),hold on; title('First time point detected spines'),axis off
+figure,imagesc(slices_all(1).h),colormap(gray),title(num2str(1)),hold on; axis off
 %We dont change labels at first time point
 for k = 1:size(blobcentroid_all(1).h,1)
     text(blobcentroid_all(1).h(k,1),blobcentroid_all(1).h(k,2),num2str(k),'FontSize',8,'FontWeight','Bold','Color','y');
@@ -16,7 +16,7 @@ for tp = 2:slice_no %for the rest of the images through whole time sequences
 % subplot(2,3,tp),imagesc(slices_all(tp).h),colormap(gray),title(num2str(tp)),hold on;axis off
 
 im = slices_all(tp).h;
-figure,imagesc(slices_all(tp).h),colormap(gray),title(['Alignment for slice number' num2str(tp)']),
+figure,imagesc(slices_all(tp).h),colormap(gray),%title(num2str(tp)),
 hold on;axis off
 for cs = 1:size(revised_centroids(tp).h,1)
     x_i = revised_centroids(tp).h(cs, 2);
